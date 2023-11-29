@@ -12,13 +12,11 @@ const model = createTodosModel(initialTodos);
 const view = createView(".js-output");
 const storage = createStorage(TODOS_STORAGE_KEY);
 
-const storageTodos = storage.pull();
+const storageTodos = storage.pull().then((todos) => {
+  model.update(todos);
 
-if (storageTodos) {
-  model.update(storageTodos);
-}
-
-view.render(model.get());
+  view.render(model.get());
+});
 
 addTaskBtnNode.addEventListener("click", function () {
   const todo = inputNode.value;

@@ -7,7 +7,7 @@ export function createView(selector) {
       let outputListHTML = "";
 
       todos.forEach(function (todo) {
-        outputListHTML += `<li>${todo}</li>`;
+        outputListHTML += `<li>${todo.title}</li>`;
       });
 
       this.node.innerHTML = `<ul>${outputListHTML}</ul>`;

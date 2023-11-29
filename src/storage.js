@@ -18,17 +18,28 @@ const firebaseConfig = {
 export function createStorage(key) {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
   return {
     key,
     db,
-    pull: function () {
-      const data = localStorage.getItem(this.key);
+    pull: async function () {
+      const querySnapshot = await getDocs(collection(this.db, this.key));
+      const todos = [];
 
-      if (!data) {
-        return null;
-      }
+      querySnapshot.forEach((doc) => {
+        todos.push({
+          id: doc.id,
+          title: doc.data().title,
+        });
+      });
 
-      return JSON.parse(data);
+      return todos;
+
+      //   const data = localStorage.getItem(this.key);
+      //   if (!data) {
+      //     return null;
+      //   }
+      //   return JSON.parse(data);
     },
     push: function (data) {
       const preparedData = JSON.stringify(data);
