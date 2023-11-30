@@ -41,9 +41,19 @@ export function createStorage(key) {
       //   }
       //   return JSON.parse(data);
     },
-    push: function (data) {
-      const preparedData = JSON.stringify(data);
-      localStorage.setItem(this.key, preparedData);
+    push: async function (todo) {
+      try {
+        const docRef = await addDoc(collection(this.db, this.key), {
+          title: todo.title,
+          status: todo.status,
+        });
+        console.log("Document written with ID: ", docRef.id);
+      } catch (e) {
+        console.error("Error adding document: ", e);
+      }
+
+      // const preparedData = JSON.stringify(data);
+      // localStorage.setItem(this.key, preparedData);
     },
   };
 }

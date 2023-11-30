@@ -591,16 +591,27 @@ const storageTodos = storage.pull().then((todos)=>{
     view.render(model.get());
 });
 addTaskBtnNode.addEventListener("click", function() {
-    const todo = inputNode.value;
+    const todo = {
+        title: inputNode.value,
+        status: "active"
+    };
     model.add(todo);
     view.render(model.get());
-    storage.push(model.get());
+    storage.push(todo);
+//in case of error show in console - undone
 });
 clearBtnNode.addEventListener("click", function() {
     model.clear();
     view.render(model.get());
     storage.push(model.get());
 });
+function triggerBtnEnter(e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("addTaskBtn").click();
+    }
+}
+inputNode.addEventListener("keypress", triggerBtnEnter);
 
 },{"./constants":"3huJa","./model":"dEDha","./storage":"bkDau","./view":"ai2uB"}],"3huJa":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
@@ -699,9 +710,18 @@ function createStorage(key) {
         //   }
         //   return JSON.parse(data);
         },
-        push: function(data) {
-            const preparedData = JSON.stringify(data);
-            localStorage.setItem(this.key, preparedData);
+        push: async function(todo) {
+            try {
+                const docRef = await (0, _firestore.addDoc)((0, _firestore.collection)(this.db, this.key), {
+                    title: todo.title,
+                    status: todo.status
+                });
+                console.log("Document written with ID: ", docRef.id);
+            } catch (e) {
+                console.error("Error adding document: ", e);
+            }
+        // const preparedData = JSON.stringify(data);
+        // localStorage.setItem(this.key, preparedData);
         }
     };
 }

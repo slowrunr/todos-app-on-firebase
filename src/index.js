@@ -19,13 +19,17 @@ const storageTodos = storage.pull().then((todos) => {
 });
 
 addTaskBtnNode.addEventListener("click", function () {
-  const todo = inputNode.value;
+  const todo = {
+    title: inputNode.value,
+    status: "active",
+  };
 
   model.add(todo);
 
   view.render(model.get());
 
-  storage.push(model.get());
+  storage.push(todo);
+  //in case of error show in console - undone
 });
 
 clearBtnNode.addEventListener("click", function () {
@@ -35,3 +39,12 @@ clearBtnNode.addEventListener("click", function () {
 
   storage.push(model.get());
 });
+
+function triggerBtnEnter(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    document.getElementById("addTaskBtn").click();
+  }
+}
+
+inputNode.addEventListener("keypress", triggerBtnEnter);
