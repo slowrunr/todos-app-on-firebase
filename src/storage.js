@@ -18,21 +18,42 @@ const firebaseConfig = {
 export function createStorage(key) {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+
   return {
     key,
     db,
-    pull: function () {
-      const data = localStorage.getItem(this.key);
+    pull: async function () {
+      const querySnapshot = await getDocs(collection(this.db, this.key));
+      const todos = [];
 
-      if (!data) {
-        return null;
+      querySnapshot.forEach((doc) => {
+        todos.push({
+          id: doc.id,
+          title: doc.data().title,
+        });
+      });
+
+      return todos;
+
+      //   const data = localStorage.getItem(this.key);
+      //   if (!data) {
+      //     return null;
+      //   }
+      //   return JSON.parse(data);
+    },
+    push: async function (todo) {
+      try {
+        const docRef = await addDoc(collection(this.db, this.key), {
+          title: todo.title,
+          status: todo.status,
+        });
+        console.log("Document written with ID: ", docRef.id);
+      } catch (e) {
+        console.error("Error adding document: ", e);
       }
 
-      return JSON.parse(data);
-    },
-    push: function (data) {
-      const preparedData = JSON.stringify(data);
-      localStorage.setItem(this.key, preparedData);
+      // const preparedData = JSON.stringify(data);
+      // localStorage.setItem(this.key, preparedData);
     },
   };
 }

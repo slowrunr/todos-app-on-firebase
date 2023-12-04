@@ -12,22 +12,24 @@ const model = createTodosModel(initialTodos);
 const view = createView(".js-output");
 const storage = createStorage(TODOS_STORAGE_KEY);
 
-const storageTodos = storage.pull();
+const storageTodos = storage.pull().then((todos) => {
+  model.update(todos);
 
-if (storageTodos) {
-  model.update(storageTodos);
-}
-
-view.render(model.get());
+  view.render(model.get());
+});
 
 addTaskBtnNode.addEventListener("click", function () {
-  const todo = inputNode.value;
+  const todo = {
+    title: inputNode.value,
+    status: "active",
+  };
 
   model.add(todo);
 
   view.render(model.get());
 
-  storage.push(model.get());
+  storage.push(todo);
+  //in case of error show in console - undone
 });
 
 clearBtnNode.addEventListener("click", function () {
@@ -37,3 +39,12 @@ clearBtnNode.addEventListener("click", function () {
 
   storage.push(model.get());
 });
+
+function triggerBtnEnter(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    document.getElementById("addTaskBtn").click();
+  }
+}
+
+inputNode.addEventListener("keypress", triggerBtnEnter);

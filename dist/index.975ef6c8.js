@@ -586,48 +586,38 @@ const initialTodos = [];
 const model = (0, _model.createTodosModel)(initialTodos);
 const view = (0, _view.createView)(".js-output");
 const storage = (0, _storage.createStorage)((0, _constants.TODOS_STORAGE_KEY));
-const storageTodos = storage.pull();
-if (storageTodos) model.update(storageTodos);
-view.render(model.get());
+const storageTodos = storage.pull().then((todos)=>{
+    model.update(todos);
+    view.render(model.get());
+});
 addTaskBtnNode.addEventListener("click", function() {
-    const todo = inputNode.value;
+    const todo = {
+        title: inputNode.value,
+        status: "active"
+    };
     model.add(todo);
     view.render(model.get());
-    storage.push(model.get());
+    storage.push(todo);
+//in case of error show in console - undone
 });
 clearBtnNode.addEventListener("click", function() {
     model.clear();
     view.render(model.get());
     storage.push(model.get());
 });
+function triggerBtnEnter(e) {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("addTaskBtn").click();
+    }
+}
+inputNode.addEventListener("keypress", triggerBtnEnter);
 
 },{"./constants":"3huJa","./model":"dEDha","./storage":"bkDau","./view":"ai2uB"}],"3huJa":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "TODOS_STORAGE_KEY", ()=>TODOS_STORAGE_KEY);
 const TODOS_STORAGE_KEY = "todos";
-
-},{}],"dEDha":[function(require,module,exports) {
-var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
-parcelHelpers.defineInteropFlag(exports);
-parcelHelpers.export(exports, "createTodosModel", ()=>createTodosModel);
-function createTodosModel(todos) {
-    return {
-        todos,
-        update: function(todos) {
-            this.todos = todos;
-        },
-        add: function(todo) {
-            this.todos.push(todo);
-        },
-        get: function() {
-            return this.todos;
-        },
-        clear: function() {
-            this.todos = [];
-        }
-    };
-}
 
 },{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"gkKU3":[function(require,module,exports) {
 exports.interopDefault = function(a) {
@@ -659,7 +649,29 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}],"bkDau":[function(require,module,exports) {
+},{}],"dEDha":[function(require,module,exports) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "createTodosModel", ()=>createTodosModel);
+function createTodosModel(todos) {
+    return {
+        todos,
+        update: function(todos) {
+            this.todos = todos;
+        },
+        add: function(todo) {
+            this.todos.push(todo);
+        },
+        get: function() {
+            return this.todos;
+        },
+        clear: function() {
+            this.todos = [];
+        }
+    };
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"gkKU3"}],"bkDau":[function(require,module,exports) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "createStorage", ()=>createStorage);
@@ -682,14 +694,34 @@ function createStorage(key) {
     return {
         key,
         db,
-        pull: function() {
-            const data = localStorage.getItem(this.key);
-            if (!data) return null;
-            return JSON.parse(data);
+        pull: async function() {
+            const querySnapshot = await (0, _firestore.getDocs)((0, _firestore.collection)(this.db, this.key));
+            const todos = [];
+            querySnapshot.forEach((doc)=>{
+                todos.push({
+                    id: doc.id,
+                    title: doc.data().title
+                });
+            });
+            return todos;
+        //   const data = localStorage.getItem(this.key);
+        //   if (!data) {
+        //     return null;
+        //   }
+        //   return JSON.parse(data);
         },
-        push: function(data) {
-            const preparedData = JSON.stringify(data);
-            localStorage.setItem(this.key, preparedData);
+        push: async function(todo) {
+            try {
+                const docRef = await (0, _firestore.addDoc)((0, _firestore.collection)(this.db, this.key), {
+                    title: todo.title,
+                    status: todo.status
+                });
+                console.log("Document written with ID: ", docRef.id);
+            } catch (e) {
+                console.error("Error adding document: ", e);
+            }
+        // const preparedData = JSON.stringify(data);
+        // localStorage.setItem(this.key, preparedData);
         }
     };
 }
@@ -26593,7 +26625,7 @@ function createView(selector) {
         render: function(todos) {
             let outputListHTML = "";
             todos.forEach(function(todo) {
-                outputListHTML += `<li>${todo}</li>`;
+                outputListHTML += `<li>${todo.title}</li>`;
             });
             this.node.innerHTML = `<ul>${outputListHTML}</ul>`;
         }
